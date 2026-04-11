@@ -1,23 +1,479 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT ELECT 2 - April 11</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Finwise | Expense Tracker Dashboard</title>
+  <!-- Tailwind CSS v3 + Font Awesome Icons + Google Fonts (Inter) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom tailwind config override to extend theme slightly (optional but clean) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    /* Smooth transitions for interactive elements */
+    .card-hover {
+      transition: all 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.15);
+    }
+    /* custom scrollbar for transaction list */
+    .transactions-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .transactions-scroll::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .transactions-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-slate-50 to-gray-100 antialiased">
 
-    <h1>Welcome to it Elect</h1>
-    <p>This is a sample paragraph of text in HTML.</p>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+    
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-700 to-purple-700 bg-clip-text text-transparent">
+          <i class="fas fa-coins text-indigo-600 mr-2"></i>ExpenseFlow
+        </h1>
+        <p class="text-gray-500 mt-1 text-sm">Track, analyze & optimize your spending</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="bg-white rounded-2xl shadow-sm px-4 py-2 flex items-center gap-2 border border-gray-100">
+          <i class="far fa-calendar-alt text-indigo-500"></i>
+          <span class="text-sm font-medium text-gray-700" id="currentDate"></span>
+        </div>
+        <button id="resetDemoBtn" class="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-xl shadow-sm border border-gray-200 transition flex items-center gap-2 text-sm font-medium">
+          <i class="fas fa-undo-alt"></i> Reset Demo
+        </button>
+      </div>
+    </div>
 
-    <h2>Useful Links</h2>
-    <ul>
-        <li><a href="https://www.w3schools.com">W3Schools HTML Tutorial</a></li>
-        <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML">MDN Web Docs</a></li>
-    </ul>
+    <!-- Summary Cards Row (Balance, Income, Expenses) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <!-- Balance Card -->
+      <div class="bg-white rounded-2xl shadow-md p-5 border border-gray-100 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm font-medium">Total Balance</p>
+            <p class="text-3xl font-bold text-gray-800 mt-1" id="balanceAmount">$0.00</p>
+          </div>
+          <div class="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
+            <i class="fas fa-wallet text-indigo-600 text-xl"></i>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-gray-400 flex items-center gap-1">
+          <i class="fas fa-chart-line"></i> <span>Net worth</span>
+        </div>
+      </div>
+      <!-- Total Income Card -->
+      <div class="bg-white rounded-2xl shadow-md p-5 border border-gray-100 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm font-medium">Total Income</p>
+            <p class="text-3xl font-bold text-emerald-600 mt-1" id="totalIncome">$0.00</p>
+          </div>
+          <div class="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center">
+            <i class="fas fa-arrow-up text-emerald-500 text-xl"></i>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-gray-400">All time earnings</div>
+      </div>
+      <!-- Total Expenses Card -->
+      <div class="bg-white rounded-2xl shadow-md p-5 border border-gray-100 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm font-medium">Total Expenses</p>
+            <p class="text-3xl font-bold text-rose-600 mt-1" id="totalExpenses">$0.00</p>
+          </div>
+          <div class="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
+            <i class="fas fa-arrow-down text-rose-500 text-xl"></i>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-gray-400">Spending total</div>
+      </div>
+    </div>
 
-    <h2>An Image Example</h2>
-    <img src="https://placeholder.com" alt="Sample Placeholder Image" width="150" height="150">
+    <!-- Two Column Layout: Add Expense Form + Transactions List + Category breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-7">
+      <!-- Left Panel: Add New Transaction Form & Category Insights -->
+      <div class="lg:col-span-1 space-y-7">
+        <!-- Add Transaction Card -->
+        <div class="bg-white rounded-2xl shadow-md p-5 border border-gray-100">
+          <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+            <i class="fas fa-plus-circle text-indigo-500"></i> Add Transaction
+          </h2>
+          <form id="transactionForm">
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <input type="text" id="descInput" required placeholder="e.g., Groceries, Salary, Coffee" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+              <input type="number" id="amountInput" required step="0.01" placeholder="0.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select id="categorySelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-300">
+                <option value="Food & Dining">🍔 Food & Dining</option>
+                <option value="Shopping">🛍️ Shopping</option>
+                <option value="Transport">🚗 Transport</option>
+                <option value="Bills & Utilities">💡 Bills & Utilities</option>
+                <option value="Entertainment">🎬 Entertainment</option>
+                <option value="Health">💊 Health</option>
+                <option value="Income">💰 Income</option>
+                <option value="Other">📌 Other</option>
+              </select>
+            </div>
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="typeRadio" value="expense" checked class="text-rose-500 focus:ring-rose-400"> 
+                  <span class="text-sm"><i class="fas fa-minus-circle text-rose-500"></i> Expense</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="typeRadio" value="income" class="text-emerald-500 focus:ring-emerald-400"> 
+                  <span class="text-sm"><i class="fas fa-plus-circle text-emerald-500"></i> Income</span>
+                </label>
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <i class="fas fa-plus"></i> Add Transaction
+            </button>
+          </form>
+        </div>
 
+        <!-- Category Spending Breakdown (expenses only) -->
+        <div class="bg-white rounded-2xl shadow-md p-5 border border-gray-100">
+          <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-3">
+            <i class="fas fa-chart-pie text-indigo-500"></i> Expenses by Category
+          </h2>
+          <div id="categoryBreakdown" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+            <!-- dynamic category items injected via JS -->
+            <div class="text-center text-gray-400 text-sm py-4">No expense data yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Transactions List & Recent Activity -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex flex-col h-full">
+          <div class="px-5 pt-5 pb-3 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-list-ul text-indigo-500"></i> Recent Transactions
+            </h2>
+            <div class="relative">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input type="text" id="searchInput" placeholder="Search transactions..." class="pl-9 pr-4 py-1.5 text-sm rounded-full border border-gray-200 w-48 focus:outline-none focus:ring-1 focus:ring-indigo-300">
+            </div>
+          </div>
+          <div class="transactions-scroll overflow-y-auto max-h-[420px]">
+            <ul id="transactionList" class="divide-y divide-gray-100">
+              <!-- dynamic transaction items -->
+              <li class="text-center text-gray-400 py-8">No transactions yet. Add your first transaction!</li>
+            </ul>
+          </div>
+          <div class="bg-gray-50 px-5 py-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
+            <span><i class="far fa-clock"></i> <span id="txnCount">0</span> entries</span>
+            <button id="clearAllBtn" class="text-rose-500 hover:text-rose-700 transition flex items-center gap-1"><i class="fas fa-trash-alt"></i> Clear all</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DATA MODEL ----------
+    let transactions = [];   // each: { id, description, amount, category, type, date }
+
+    // DOM Elements
+    const balanceEl = document.getElementById('balanceAmount');
+    const totalIncomeEl = document.getElementById('totalIncome');
+    const totalExpensesEl = document.getElementById('totalExpenses');
+    const transactionListEl = document.getElementById('transactionList');
+    const categoryBreakdownEl = document.getElementById('categoryBreakdown');
+    const txnCountSpan = document.getElementById('txnCount');
+    const form = document.getElementById('transactionForm');
+    const descInput = document.getElementById('descInput');
+    const amountInput = document.getElementById('amountInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const typeRadios = document.querySelectorAll('input[name="typeRadio"]');
+    const searchInput = document.getElementById('searchInput');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const resetDemoBtn = document.getElementById('resetDemoBtn');
+    const currentDateSpan = document.getElementById('currentDate');
+
+    // Helper: format currency USD
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
+    };
+
+    // update all UI: summary cards, transactions list, category breakdown, transaction count
+    function updateDashboard() {
+      // calculate totals
+      let totalIncome = 0;
+      let totalExpense = 0;
+      transactions.forEach(t => {
+        if (t.type === 'income') totalIncome += t.amount;
+        else totalExpense += t.amount;
+      });
+      const balance = totalIncome - totalExpense;
+      balanceEl.innerText = formatCurrency(balance);
+      totalIncomeEl.innerText = formatCurrency(totalIncome);
+      totalExpensesEl.innerText = formatCurrency(totalExpense);
+      
+      // render transaction list with search filter
+      renderTransactionList();
+      
+      // render category breakdown (expense categories only)
+      renderCategoryBreakdown();
+      
+      // update transaction count
+      txnCountSpan.innerText = transactions.length;
+    }
+    
+    // Filter transactions based on search input (description or category)
+    function filterTransactionsBySearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) return transactions;
+      return transactions.filter(t => 
+        t.description.toLowerCase().includes(query) || 
+        t.category.toLowerCase().includes(query)
+      );
+    }
+    
+    function renderTransactionList() {
+      const filtered = filterTransactionsBySearch();
+      if (filtered.length === 0) {
+        transactionListEl.innerHTML = `<li class="text-center text-gray-400 py-8"><i class="fas fa-receipt"></i> No matching transactions</li>`;
+        return;
+      }
+      
+      // sort by most recent first (id descending)
+      const sorted = [...filtered].reverse();
+      const html = sorted.map(txn => {
+        const isExpense = txn.type === 'expense';
+        const sign = isExpense ? '-' : '+';
+        const amountClass = isExpense ? 'text-rose-600' : 'text-emerald-600';
+        const iconClass = isExpense ? 'fa-arrow-down text-rose-500' : 'fa-arrow-up text-emerald-500';
+        const dateObj = new Date(txn.date);
+        const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return `
+          <li class="flex justify-between items-center p-4 hover:bg-gray-50 transition group">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="fas ${iconClass} text-sm"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-800">${escapeHtml(txn.description)}</p>
+                <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                  <span class="bg-gray-100 px-2 py-0.5 rounded-full">${escapeHtml(txn.category)}</span>
+                  <span><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-bold ${amountClass}">${sign} ${formatCurrency(txn.amount)}</span>
+              <button data-id="${txn.id}" class="delete-txn-btn text-gray-300 hover:text-rose-500 transition opacity-0 group-hover:opacity-100">
+                <i class="fas fa-trash-can"></i>
+              </button>
+            </div>
+          </li>
+        `;
+      }).join('');
+      transactionListEl.innerHTML = html;
+      
+      // attach delete events to each delete button
+      document.querySelectorAll('.delete-txn-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.getAttribute('data-id'));
+          deleteTransactionById(id);
+        });
+      });
+    }
+    
+    // simple escape to avoid XSS
+    function escapeHtml(str) {
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+    
+    function deleteTransactionById(id) {
+      transactions = transactions.filter(t => t.id !== id);
+      saveToLocalStorage();
+      updateDashboard();
+    }
+    
+    function renderCategoryBreakdown() {
+      // aggregate expense amounts by category
+      const expenseMap = new Map(); // category -> total
+      transactions.forEach(t => {
+        if (t.type === 'expense') {
+          const cat = t.category;
+          const current = expenseMap.get(cat) || 0;
+          expenseMap.set(cat, current + t.amount);
+        }
+      });
+      if (expenseMap.size === 0) {
+        categoryBreakdownEl.innerHTML = `<div class="text-center text-gray-400 text-sm py-4"><i class="fas fa-chart-simple"></i> No expenses recorded</div>`;
+        return;
+      }
+      // Convert to array and sort by total descending
+      const categoriesArray = Array.from(expenseMap.entries()).map(([cat, total]) => ({ category: cat, total }));
+      categoriesArray.sort((a,b) => b.total - a.total);
+      // total expenses for percentage calculation
+      const totalExpenseSum = categoriesArray.reduce((sum, item) => sum + item.total, 0);
+      
+      const colors = ['bg-indigo-100 text-indigo-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700', 'bg-rose-100 text-rose-700', 'bg-purple-100 text-purple-700', 'bg-sky-100 text-sky-700', 'bg-lime-100 text-lime-700'];
+      const html = categoriesArray.map((item, idx) => {
+        const percent = (item.total / totalExpenseSum) * 100;
+        const barColor = idx % 2 === 0 ? 'bg-indigo-400' : 'bg-indigo-300';
+        const colorClass = colors[idx % colors.length];
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-sm">
+              <span class="font-medium flex items-center gap-1"><i class="fas fa-tag text-xs"></i> ${escapeHtml(item.category)}</span>
+              <span class="font-semibold text-gray-700">${formatCurrency(item.total)}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div class="${barColor} h-2 rounded-full" style="width: ${percent}%"></div>
+            </div>
+            <div class="text-right text-xs text-gray-400">${percent.toFixed(1)}%</div>
+          </div>
+        `;
+      }).join('');
+      categoryBreakdownEl.innerHTML = `<div class="space-y-4">${html}</div>`;
+    }
+    
+    // Add new transaction
+    function addTransaction(description, amount, category, type) {
+      if (!description.trim() || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid description and amount greater than 0.");
+        return false;
+      }
+      const newId = Date.now();
+      const newTransaction = {
+        id: newId,
+        description: description.trim(),
+        amount: parseFloat(amount),
+        category: category,
+        type: type,   // 'expense' or 'income'
+        date: new Date().toISOString()
+      };
+      transactions.push(newTransaction);
+      saveToLocalStorage();
+      updateDashboard();
+      return true;
+    }
+    
+    // handle form submission
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      let selectedType = 'expense';
+      for (let radio of typeRadios) {
+        if (radio.checked) {
+          selectedType = radio.value;
+          break;
+        }
+      }
+      const description = descInput.value;
+      const amount = parseFloat(amountInput.value);
+      const category = categorySelect.value;
+      
+      if (addTransaction(description, amount, category, selectedType)) {
+        // reset form fields but keep default type expense selected
+        descInput.value = '';
+        amountInput.value = '';
+        categorySelect.value = 'Food & Dining';
+        // keep expense radio default
+        document.querySelector('input[name="typeRadio"][value="expense"]').checked = true;
+      }
+    }
+    
+    // clear all transactions
+    function clearAllTransactions() {
+      if (transactions.length > 0 && confirm("⚠️ Are you sure you want to delete ALL transactions? This cannot be undone.")) {
+        transactions = [];
+        saveToLocalStorage();
+        updateDashboard();
+      }
+    }
+    
+    // reset to demo data (meaningful sample entries)
+    function resetDemoData() {
+      transactions = [
+        { id: 1001, description: "Grocery Shopping", amount: 68.42, category: "Food & Dining", type: "expense", date: new Date(Date.now() - 2*86400000).toISOString() },
+        { id: 1002, description: "Monthly Salary", amount: 3250.00, category: "Income", type: "income", date: new Date(Date.now() - 5*86400000).toISOString() },
+        { id: 1003, description: "Uber Ride", amount: 15.30, category: "Transport", type: "expense", date: new Date(Date.now() - 1*86400000).toISOString() },
+        { id: 1004, description: "Netflix Subscription", amount: 15.99, category: "Entertainment", type: "expense", date: new Date(Date.now() - 3*86400000).toISOString() },
+        { id: 1005, description: "Electricity Bill", amount: 85.20, category: "Bills & Utilities", type: "expense", date: new Date(Date.now() - 7*86400000).toISOString() },
+        { id: 1006, description: "Freelance Project", amount: 450.00, category: "Income", type: "income", date: new Date(Date.now() - 4*86400000).toISOString() },
+        { id: 1007, description: "New Headphones", amount: 89.99, category: "Shopping", type: "expense", date: new Date(Date.now() - 6*86400000).toISOString() },
+        { id: 1008, description: "Coffee Shop", amount: 4.75, category: "Food & Dining", type: "expense", date: new Date(Date.now() - 0.5*86400000).toISOString() }
+      ];
+      saveToLocalStorage();
+      updateDashboard();
+    }
+    
+    // LocalStorage helpers
+    function saveToLocalStorage() {
+      localStorage.setItem('expense_tracker_data', JSON.stringify(transactions));
+    }
+    
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem('expense_tracker_data');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            transactions = parsed;
+          } else {
+            transactions = [];
+          }
+        } catch(e) { transactions = []; }
+      } else {
+        // initial demo data if nothing stored
+        resetDemoData();
+        return;
+      }
+      updateDashboard();
+    }
+    
+    // set current date in header
+    function setCurrentDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      currentDateSpan.innerText = now.toLocaleDateString(undefined, options);
+    }
+    
+    // Event listeners & initial load
+    form.addEventListener('submit', handleFormSubmit);
+    clearAllBtn.addEventListener('click', clearAllTransactions);
+    resetDemoBtn.addEventListener('click', () => {
+      if (confirm("Load demo transactions? Your current data will be replaced.")) {
+        resetDemoData();
+      }
+    });
+    searchInput.addEventListener('input', () => renderTransactionList());
+    
+    // init
+    loadFromLocalStorage();
+    setCurrentDate();
+  </script>
 </body>
 </html>
